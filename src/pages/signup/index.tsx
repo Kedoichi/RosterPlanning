@@ -35,15 +35,20 @@ const SignUp = () => {
     const { name, phone, email, password, businessCode } = formData;
 
     try {
-      // Search for a business with the given code
-      const businessesQuery = query(
+      // Search for a business with the given manager or staff code
+      let businessQuery = query(
         collection(db, "businesses"),
-        or(
-          where("ManagerCode", "==", businessCode),
-          where("StaffCode", "==", businessCode)
-        )
+        where("ManagerCode", "==", businessCode)
       );
-      const querySnapshot = await getDocs(businessesQuery);
+      let querySnapshot = await getDocs(businessQuery);
+
+      if (querySnapshot.empty) {
+        businessQuery = query(
+          collection(db, "businesses"),
+          where("StaffCode", "==", businessCode)
+        );
+        querySnapshot = await getDocs(businessQuery);
+      }
 
       let role = "";
       let businessId = "";
@@ -73,15 +78,16 @@ const SignUp = () => {
         password
       );
       const batch = writeBatch(db);
+      const user = userCredential.user;
 
       // Add the user to the Firestore 'employees' collection
       const userRef = doc(collection(db, "employees"));
-      batch.set(userRef, {
+      await setDoc(doc(db, "employees", user.uid), {
         name,
         phone,
         email,
         role,
-        businessId,
+        businessId, // Ensure you have obtained this from the business document
       });
 
       // Commit the batch
@@ -89,10 +95,13 @@ const SignUp = () => {
 
       // Redirect to the dashboard based on role
       role === "manager"
-        ? router.push("/admin-dashboard")
-        : router.push("/staff-dashboard");
+        ? router.push("/dashboard/admin")
+        : router.push("/dashboard/staff");
     } catch (error) {
-      setError(error instanceof Error ? error.message : String(error));
+      // Updated error handling
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
     }
   };
 

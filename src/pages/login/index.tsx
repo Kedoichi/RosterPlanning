@@ -1,9 +1,10 @@
 // src/pages/login.tsx
 import type { NextPage } from "next";
 import { useState } from "react";
-import { auth } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 import { useRouter } from "next/router";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 const Login: NextPage = () => {
   const [email, setEmail] = useState("");
@@ -13,8 +14,36 @@ const Login: NextPage = () => {
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard");
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      console.log(user);
+
+      // Fetch the user document to determine the role
+      const userDocRef = doc(db, "employees", user.uid);
+      const userDoc = await getDoc(userDocRef);
+      console.log(userDoc);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log(userData);
+        // Redirect based on role
+        if (userData.role === "manager") {
+          router.push("/dashboard/admin");
+        } else if (userData.role === "staff") {
+          router.push("/dashboard/staff");
+        } else {
+          // Handle case for unknown role or additional roles if needed
+          console.error("User role is not recognized");
+          // Optionally, sign out the user or redirect to a default page
+        }
+      } else {
+        console.error("User document does not exist");
+        // Optionally, sign out the user or handle this case as needed
+      }
     } catch (error) {
       console.error("Authentication error", error);
       // Handle error - show user a message, log, etc.
