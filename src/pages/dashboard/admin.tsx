@@ -1,44 +1,13 @@
-// src/pages/manager-dashboard.tsx
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
-import { checkUserRole } from "../../utils/auth";
+import React from "react";
+import DashboardLayout from "../../components/DashboardLayout";
 
-const ManagerDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // User is signed in, see if they have the 'manager' role.
-        const hasRole = await checkUserRole(user, "manager");
-        if (!hasRole) {
-          // User is not a manager; redirect them.
-          router.push("/login");
-        }
-        setLoading(false);
-      } else {
-        // No user is signed in; redirect to login page.
-        router.push("/login");
-      }
-    });
-
-    // Cleanup the listener when the component unmounts
-    return unsubscribe;
-  }, [router]);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
+const AdminDashboard = () => {
   return (
-    <div>
-      <h1>Manager Dashboard</h1>
-      {/* Dashboard content goes here */}
-    </div>
+    <DashboardLayout userType="manager">
+      <h1 className="text-3xl font-semibold">Manager Dashboard</h1>
+      {/* Manager-specific content */}
+    </DashboardLayout>
   );
 };
 
-export default ManagerDashboard;
+export default AdminDashboard;

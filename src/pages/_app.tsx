@@ -1,9 +1,9 @@
 // src/pages/_app.tsx
-import '../styles/globals.css';
-import type { AppProps } from 'next/app';
-import Head from 'next/head';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
+import "../styles/globals.css";
+import type { AppProps } from "next/app";
+import Head from "next/head";
+import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -11,7 +11,6 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Head>
         <title>Roster Planner</title>
       </Head>
-      <Header />
       <main>
         <Component {...pageProps} />
       </main>

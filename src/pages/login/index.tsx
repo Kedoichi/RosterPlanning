@@ -4,49 +4,84 @@ import { useState } from "react";
 import { auth, db } from "../../firebaseConfig";
 import { useRouter } from "next/router";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 
 const Login: NextPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const [loginError, setLoginError] = useState("");
+  const [code, setCode] = useState("");
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
+      // First, authenticate the user with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
       const user = userCredential.user;
-      console.log(user);
 
-      // Fetch the user document to determine the role
-      const userDocRef = doc(db, "employees", user.uid);
-      const userDoc = await getDoc(userDocRef);
-      console.log(userDoc);
+      // Then, find the business associated with the provided code
+      const businessQuery = query(
+        collection(db, "businesses"),
+        where("Code", "==", code)
+      );
+      const businessSnapshot = await getDocs(businessQuery);
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        console.log(userData);
-        // Redirect based on role
-        if (userData.role === "manager") {
-          router.push("/dashboard/admin");
-        } else if (userData.role === "staff") {
-          router.push("/dashboard/staff");
+      if (!businessSnapshot.empty) {
+        const businessDoc = businessSnapshot.docs[0];
+        const businessId = businessDoc.id;
+
+        // Fetch the user document within the nested 'employees' collection of the business
+        const userDocRef = doc(
+          db,
+          "businesses",
+          businessId,
+          "employees",
+          user.uid
+        );
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // Store the necessary details including the business ID in local storage
+          localStorage.setItem(
+            "userDetails",
+            JSON.stringify({ ...userData, businessId })
+          );
+
+          // Redirect based on role
+          if (userData.role === "manager") {
+            router.push("/dashboard/admin");
+          } else if (userData.role === "staff") {
+            router.push("/dashboard/staff");
+          } else {
+            console.error("User role is not recognized");
+            setLoginError("User role is not recognized");
+          }
         } else {
-          // Handle case for unknown role or additional roles if needed
-          console.error("User role is not recognized");
-          // Optionally, sign out the user or redirect to a default page
+          console.error("User document does not exist");
+          setLoginError("User document does not exist");
         }
       } else {
-        console.error("User document does not exist");
-        // Optionally, sign out the user or handle this case as needed
+        console.error("Business not found for the provided code");
+        setLoginError("Business not found for the provided code");
       }
     } catch (error) {
       console.error("Authentication error", error);
-      // Handle error - show user a message, log, etc.
+      setLoginError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
     }
   };
 
@@ -57,6 +92,21 @@ const Login: NextPage = () => {
       </h1>
       <form onSubmit={handleLogin} className="max-w-md mx-auto">
         <div className="mb-4">
+          <label
+            htmlFor="code"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Business Code
+          </label>
+          <input
+            id="code"
+            type="text"
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+
           <label
             htmlFor="email"
             className="block text-sm font-medium text-gray-700"
@@ -89,11 +139,19 @@ const Login: NextPage = () => {
           />
         </div>
         <div className="flex items-center justify-between">
+          {loginError && <p className="text-red-500">{loginError}</p>}
           <button
             type="submit"
             className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
           >
             Sign in
+          </button>
+          <button
+            //onclick redirect
+            onClick={() => router.push("/signup")}
+            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            Sign up
           </button>
         </div>
       </form>

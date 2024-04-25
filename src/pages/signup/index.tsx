@@ -35,7 +35,7 @@ const SignUp = () => {
     const { name, phone, email, password, businessCode } = formData;
 
     try {
-      // Search for a business with the given manager or staff code
+      // Search for a business with the given business code
       let businessQuery = query(
         collection(db, "businesses"),
         where("ManagerCode", "==", businessCode)
@@ -43,12 +43,13 @@ const SignUp = () => {
       let querySnapshot = await getDocs(businessQuery);
 
       if (querySnapshot.empty) {
-        businessQuery = query(
-          collection(db, "businesses"),
-          where("StaffCode", "==", businessCode)
-        );
-        querySnapshot = await getDocs(businessQuery);
+        setError("Invalid business code.");
+        return;
       }
+
+      // Retrieve the business document
+      const businessDoc = querySnapshot.docs[0];
+      const businessData = businessDoc.data();
 
       let role = "";
       let businessId = "";
@@ -66,39 +67,39 @@ const SignUp = () => {
         businessId = doc.id;
       });
 
-      if (!role) {
-        setError("Invalid business code.");
-        return;
-      }
-
       // Create the user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      const batch = writeBatch(db);
       const user = userCredential.user;
 
-      // Add the user to the Firestore 'employees' collection
-      const userRef = doc(collection(db, "employees"));
-      await setDoc(doc(db, "employees", user.uid), {
+      // Define the path to the nested 'employees' collection within the 'businesses' collection
+      const employeeRef = doc(
+        db,
+        "businesses",
+        businessDoc.id,
+        "employees",
+        user.uid
+      );
+      const userData = {
         name,
         phone,
         email,
         role,
-        businessId, // Ensure you have obtained this from the business document
-      });
-
-      // Commit the batch
-      await batch.commit();
+        businessId: businessDoc.id,
+      };
+      localStorage.setItem("userDetails", JSON.stringify(userData));
+      // Set the employee document
+      await setDoc(
+        doc(db, "businesses", businessDoc.id, "employees", user.uid),
+        userData
+      );
 
       // Redirect to the dashboard based on role
-      role === "manager"
-        ? router.push("/dashboard/admin")
-        : router.push("/dashboard/staff");
+      router.push(role === "manager" ? "/dashboard/admin" : "/dashboard/staff");
     } catch (error) {
-      // Updated error handling
       setError(
         error instanceof Error ? error.message : "An unexpected error occurred"
       );
