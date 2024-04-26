@@ -187,7 +187,15 @@ const StaffList = () => {
                   <td className="border px-6 py-4">{employee.email}</td>
                   <td className="border px-6 py-4">{employee.role}</td>
                   <td className="border px-6 py-4">
-                    {employee.stores ? employee.stores.join(", ") : ""}
+                    {employee.stores
+                      ? employee.stores
+                          .map(
+                            (storeId) =>
+                              stores.find((store) => store.id === storeId)?.name
+                          )
+                          .filter((name) => name)
+                          .join(", ")
+                      : ""}
                   </td>
                   <td className="border px-6 py-4">
                     <Link href={`edit?employeeId=${employee.id}`}>
