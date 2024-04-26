@@ -7,7 +7,7 @@ import moment from "moment";
 import DashboardLayout from "../../../components/DashboardLayout";
 import { db } from "../../../firebaseConfig";
 import { collection, query, getDocs } from "firebase/firestore";
-
+import { v4 as uuidv4 } from "uuid";
 declare global {
   interface Window {
     draggedEmployeeName: string;
@@ -21,6 +21,7 @@ type Employee = {
 };
 
 type Event = {
+  id: string;
   title: string;
   start: Date;
   end: Date;
@@ -32,7 +33,7 @@ const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
 
 const Roster = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<{ [key: string]: Event }>({});
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null
@@ -61,13 +62,13 @@ const Roster = () => {
   }, []);
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
         setIsControlPressed(true);
       }
     };
 
-    const handleKeyUp = (event) => {
+    const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key === "Control" || event.key === "Meta") {
         setIsControlPressed(false);
       }
@@ -82,36 +83,51 @@ const Roster = () => {
     };
   }, []);
   let eventIdCounter = 0;
-  const generateNewId = () => {
-    eventIdCounter += 1;
-    return eventIdCounter;
-  };
-  const moveEvent = ({ event, start, end, isAllDay: droppedOnAllDaySlot }) => {
-    const updatedEvent = { ...event, start, end };
-
+  const generateNewId = uuidv4;
+  // Handling the movement or duplication of an event
+  const moveEvent = ({
+    event,
+    start,
+    end,
+  }: {
+    event: Event;
+    start: Date;
+    end: Date;
+  }) => {
+    const id = event.id || uuidv4(); // Use existing ID or generate a new one
+    // Check if the control key is pressed for duplication
     if (isControlPressed) {
-      // Clone the event. Assign a new ID for the clone, and adjust the start and end times as necessary
-      const clone = { ...updatedEvent, id: generateNewId() };
-      setEvents((prevEvents) => [...prevEvents, clone]);
+      // Duplicate the event
+      const newId = generateNewId();
+      setEvents((prevEvents) => {
+        // Create a new object to hold the updated events
+        const updatedEvents = { ...prevEvents };
+        // Add the new event as a duplicate of the existing one, with a new ID
+        updatedEvents[newId] = { ...event, id: newId, start, end };
+        return updatedEvents;
+      });
     } else {
-      // Move the event as usual
-      setEvents((prevEvents) =>
-        prevEvents.map((existingEvent) =>
-          existingEvent.id === event.id ? updatedEvent : existingEvent
-        )
-      );
+      // Move the event
+      setEvents((prevEvents) => ({
+        ...prevEvents,
+        [id]: { ...event, start, end }, // Update event by key
+      }));
     }
   };
+
   const handleDeleteEvent = () => {
     if (selectedEvent) {
-      setEvents((prevEvents) =>
-        prevEvents.filter((event) => event.id !== selectedEvent.id)
-      );
-      setSelectedEvent(null); // Hide the form after deletion
+      setEvents((prevEvents) => {
+        const updatedEvents = { ...prevEvents };
+        delete updatedEvents[(selectedEvent as Event).id];
+        return updatedEvents;
+      });
+      setSelectedEvent(null);
     }
   };
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
+    console.log(event);
   };
   const onDropFromOutside = ({
     start,
@@ -121,50 +137,45 @@ const Roster = () => {
     start: Date;
     end: Date;
     allDay: boolean;
-
-    // Rest of the code...
   }) => {
-    const event = {
-      title: window.draggedEmployeeName,
-      start,
-      end: new Date(start.getTime() + 3 * 60 * 60 * 1000), // 3 hours laterend,
-      allDay: allDay,
-    };
-    setEvents((prev) => [...prev, event]);
+    const id = uuidv4(); // Generate a new ID for the new event
+    const title = window.draggedEmployeeName;
+    // Create new event and add to state
+    setEvents((prevEvents) => ({
+      ...prevEvents,
+      [id]: {
+        id,
+        title,
+        start,
+        end: new Date(start.getTime() + 2 * 60 * 60 * 1000),
+        allDay,
+        duration: 0, // Add the required duration property
+      },
+    }));
   };
 
-  const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
-    if (selectedEmployee) {
-      const newEvent = {
-        title: selectedEmployee.name,
-        start: slotInfo.start,
-        end: slotInfo.end,
-      };
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
-      setSelectedEmployee(null); // Clear selection after adding
-    }
-  };
   // Function to handle form submission for event updates
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedEvents = events.map((event) =>
-      event.id === selectedEvent.id
-        ? {
-            ...event,
-            title: selectedEvent.title,
-            start: selectedEvent.start,
-            end: selectedEvent.end,
-          }
-        : event
-    );
-    setEvents(updatedEvents);
-    setSelectedEvent(null); // Hide the form after submission
+    if (selectedEvent) {
+      setEvents((prevEvents) => ({
+        ...prevEvents,
+        [selectedEvent.id]: {
+          ...prevEvents[selectedEvent.id],
+          title: selectedEvent.title,
+          start: selectedEvent.start,
+          end: selectedEvent.end,
+        },
+      }));
+      setSelectedEvent(null);
+    }
   };
   const handleDragStart = (employee: Employee) => {
     setSelectedEmployee(employee);
   };
-  const CustomEvent = ({ event }) => {
-    let durationMs = event.end - event.start;
+  const CustomEvent = ({ event }: { event: Event }) => {
+    let durationMs =
+      (event.end as Date).getTime() - (event.start as Date).getTime();
     let durationMin = Math.floor(durationMs / 60000);
     let hours = Math.floor(durationMin / 60);
     let minutes = durationMin % 60;
@@ -177,13 +188,21 @@ const Roster = () => {
       </span>
     );
   };
+
+  // Convert events object to an array for the calendar component
+  const eventsArray = Object.values(events);
+  const toLocalTimeString = (date) => {
+    const offset = date.getTimezoneOffset() * 60000; // Convert offset to milliseconds
+    const localISOTime = new Date(date - offset).toISOString().slice(0, -1);
+    return localISOTime.slice(0, 16);
+  };
   return (
     <DashboardLayout userType="manager">
       <div className="flex">
         <div style={{ height: "500pt", flex: 1 }}>
           <DnDCalendar
             localizer={localizer}
-            events={events}
+            events={eventsArray}
             onEventDrop={moveEvent}
             resizable
             onEventResize={moveEvent}
@@ -232,9 +251,8 @@ const Roster = () => {
                 >
                   Staff
                 </label>
-                <input
-                  type="text"
-                  id="eventTitle"
+                <select
+                  id="eventEmployee"
                   value={selectedEvent.title}
                   onChange={(e) =>
                     setSelectedEvent({
@@ -243,7 +261,13 @@ const Roster = () => {
                     })
                   }
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                />
+                >
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.name}>
+                      {employee.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label
@@ -255,7 +279,7 @@ const Roster = () => {
                 <input
                   type="datetime-local"
                   id="startTime"
-                  value={selectedEvent.start.toISOString().slice(0, 16)}
+                  value={toLocalTimeString(selectedEvent.start)}
                   onChange={(e) =>
                     setSelectedEvent({
                       ...selectedEvent,
@@ -275,7 +299,7 @@ const Roster = () => {
                 <input
                   type="datetime-local"
                   id="endTime"
-                  value={selectedEvent.end.toISOString().slice(0, 16)}
+                  value={toLocalTimeString(selectedEvent.end)}
                   onChange={(e) =>
                     setSelectedEvent({
                       ...selectedEvent,

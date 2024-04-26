@@ -142,7 +142,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </aside>
 
         {/* Content area */}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 h-full">{children}</main>
       </div>
     </div>
   );
