@@ -51,13 +51,13 @@ const Login: NextPage = () => {
           user.uid
         );
         const userDoc = await getDoc(userDocRef);
-
+        const userId = user.uid;
         if (userDoc.exists()) {
           const userData = userDoc.data();
           // Store the necessary details including the business ID in local storage
           localStorage.setItem(
             "userDetails",
-            JSON.stringify({ ...userData, businessId })
+            JSON.stringify({ ...userData, businessId, userId })
           );
 
           // Redirect based on role

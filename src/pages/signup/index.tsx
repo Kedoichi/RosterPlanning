@@ -43,8 +43,15 @@ const SignUp = () => {
       let querySnapshot = await getDocs(businessQuery);
 
       if (querySnapshot.empty) {
-        setError("Invalid business code.");
-        return;
+        businessQuery = query(
+          collection(db, "businesses"),
+          where("StaffCode", "==", businessCode)
+        );
+        querySnapshot = await getDocs(businessQuery);
+      }
+
+      if (querySnapshot.empty) {
+        throw new Error("Business not found");
       }
 
       // Retrieve the business document
