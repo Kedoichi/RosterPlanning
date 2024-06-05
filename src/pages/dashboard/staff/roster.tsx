@@ -134,7 +134,12 @@ const StaffRoster = () => {
 
     fetchEvents();
   }, [currentStore, db]); // Ensure db is included if it's from a context or prop
+  // Create date objects for 6 AM and 9 PM
+  const minTime = new Date();
+  minTime.setHours(6, 0, 0); // Set to 6 AM
 
+  const maxTime = new Date();
+  maxTime.setHours(21, 0, 0); // Set to 9 PM
   return (
     <DashboardLayout userType="staff">
       <div>
@@ -156,9 +161,12 @@ const StaffRoster = () => {
       <Calendar
         localizer={localizer}
         events={events}
-        startAccessor="start"
-        endAccessor="end"
+        defaultView="week"
+        views={["week", "day"]}
         style={{ height: 500 }}
+        min={minTime} // Set the minimum time for the calendar
+        max={maxTime} // Set the maximum time for the calendar
+        step={30}
         eventPropGetter={(event) => ({
           style: {
             backgroundColor: event.bgColor || "#3174ad",
