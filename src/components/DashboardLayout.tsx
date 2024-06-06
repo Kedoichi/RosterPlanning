@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
@@ -19,7 +18,8 @@ import {
   faChevronDown,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-// Define the UserDetails type based on your Firestore document
+import Link from "next/link";
+
 type UserDetails = {
   name: string;
   email: string;
@@ -92,10 +92,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {item.href && !item.subItems ? (
           <Link href={item.href}>
             <span
-              className={`flex items-center space-x-2 px-4 py-2 mt-2 text-sm font-semibold rounded-lg cursor-pointer ${
+              className={`flex items-center space-x-2 py-4 px-4 text-base font-semibold rounded-lg cursor-pointer ${
                 router.pathname === item.href
-                  ? "bg-[#1d1d1d] text-[#ffffff]"
-                  : "hover:bg-[#1d1d1d] hover:text-[#ffffff]"
+                  ? "bg-select text-textSelected my-1"
+                  : "hover:bg-accent hover:text-offWhite"
               }`}
             >
               <FontAwesomeIcon icon={item.icon} />
@@ -104,10 +104,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </Link>
         ) : (
           <div
-            className={`flex justify-between items-center px-4 py-2 mt-2 text-sm font-semibold rounded-lg cursor-pointer ${
+            className={`flex justify-between items-center px-4 py-4 text-base font-semibold rounded-lg cursor-pointer ${
               router.pathname === item.href
-                ? "bg-[#1d1d1d] text-[#ffffff]"
-                : "hover:bg-[#1d1d1d] hover:text-[#ffffff]"
+                ? "bg-select text-textSelected"
+                : "hover:bg-accent hover:text-offWhite"
             }`}
             onClick={() => item.subItems && toggleMenuItem(item.name)}
           >
@@ -173,37 +173,39 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     userType === "manager" ? managerSidebarItems : staffSidebarItems;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-s">
+    <div className="min-h-screen flex flex-col bg-offWhite">
       <div className="flex flex-1">
-        <aside className="w-64 bg-[#111111] text-[#a7a7a7] flex flex-col justify-around">
-          <div className="flex flex-1 flex-col pt-8">
-            <div className="px-6 py-4">
-              <div className="flex items-center space-x-4">                
+        <aside className="w-60 bg-secondary text-textPrimary flex flex-col justify-between inset-y-0 pt-8">
+          <nav className="mt-4 px-2">{renderSidebarItems(sidebarItems)}</nav>
+          <div className="mt-auto p-4 flex flex-col items-start">
+            <div className="px-6 py-4 w-full rounded-xl border-1 border-border bg-highlight">
+              <div className="flex items-center space-x-4">
                 <div>
                   <div className="font-bold">{userInfo?.name}</div>
                   <div className="text-sm opacity-75">{userInfo?.email}</div>
                 </div>
               </div>
             </div>
-            <nav className="mt-4 px-2">{renderSidebarItems(sidebarItems)}</nav>
-          </div>
-          <div className="mt-auto p-4">
-            <Link href="/settings">
-              <span className="flex items-center space-x-2 px-4 py-2 mt-2 text-sm font-semibold rounded-lg cursor-pointer hover:bg-[#1d1d1d] hover:text-[#ffffff]">
-                <FontAwesomeIcon icon={faCog} />
-                <span>Settings</span>
-              </span>
-            </Link>
+
+            <hr className="w-full border-[1px] border-border mt-4"></hr>
+
+            <button
+              onClick={() => router.push("/settings")}
+              className="flex items-center space-x-2 px-4 py-3 w-full text-base font-semibold rounded-lg cursor-pointer hover:bg-accent hover:text-offWhite"
+            >
+              <FontAwesomeIcon icon={faCog} />
+              <span>Settings</span>
+            </button>
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 px-4 py-2 mt-2 text-sm font-semibold rounded-lg cursor-pointer hover:bg-[#1d1d1d] hover:text-[#ffffff] w-full text-left"
+              className="flex items-center space-x-2 px-4 py-3 w-full text-base font-semibold rounded-lg cursor-pointer hover:bg-accent hover:text-offWhite"
             >
               <FontAwesomeIcon icon={faSignOutAlt} />
               <span>Log out</span>
             </button>
           </div>
         </aside>
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-4 bg-survey overflow-y-auto">{children}</main>
       </div>
     </div>
   );

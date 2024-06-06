@@ -1,9 +1,8 @@
-// src/components/layout/Header.tsx
 import Link from "next/link";
 
 const Header = () => {
   return (
-    <header className="bg-blue-500 text-white">
+    <header className="bg-primary text-offWhite">
       <nav className="container mx-auto flex justify-between p-4">
         <Link href="/"></Link>
         <Link href="/login" passHref>
