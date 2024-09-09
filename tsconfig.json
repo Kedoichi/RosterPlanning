@@ -23,7 +23,10 @@
       ],
       "@/components/*": [
         "./src/components/*"
-      ] // Change this line
+      ],
+      "@/hooks/*": [
+        "./src/hooks/*"
+      ]
     },
     "target": "ES2017"
   },
