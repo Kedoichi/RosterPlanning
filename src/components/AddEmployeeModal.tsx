@@ -147,7 +147,7 @@ const AddEmployeeModal = ({
                           </select>
                         </div>
                         <div>
-                          <h4 className="text-md font-medium text-gray-700 mb-2 items-center text-center text-lg font-semibold">
+                          <h4 className="text-md text-gray-700 mb-2 items-center text-center text-lg font-semibold">
                             Select Stores
                           </h4>
                           <div className="space-y-2 max-h-40 overflow-y-auto flex items-center gap-14">

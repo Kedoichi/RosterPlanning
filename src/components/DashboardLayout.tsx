@@ -17,6 +17,8 @@ import {
   faSignOutAlt,
   faChevronDown,
   faChevronRight,
+  faChevronLeft,
+  faBars,
 } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 
@@ -30,13 +32,17 @@ type UserDetails = {
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
+  userType: "manager" | "staff";
 };
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [userInfo, setUserInfo] = useState<UserDetails | null>(null);
   const [openMenu, setOpenMenu] = useState<Record<string, boolean>>({});
   const router = useRouter();
-
+  const [isMinimized, setIsMinimized] = useState(false);
+  const toggleSidebar = () => {
+    setIsMinimized(!isMinimized);
+  };
   useEffect(() => {
     const fetchUserData = async () => {
       const savedUserDetails = localStorage.getItem("userDetails");
@@ -104,7 +110,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               }`}
             >
               <FontAwesomeIcon icon={item.icon} />
-              <span>{item.name}</span>
+              {!isMinimized && <span>{item.name}</span>}
             </span>
           </Link>
         ) : (
@@ -116,15 +122,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             }`}
             onClick={() => item.subItems && toggleMenuItem(item.name)}
           >
-            <span>{item.name}</span>
-            {item.subItems && (
-              <FontAwesomeIcon
-                icon={openMenu[item.name] ? faChevronDown : faChevronRight}
-              />
+            <FontAwesomeIcon icon={item.icon} />
+            {!isMinimized && (
+              <>
+                <span>{item.name}</span>
+                {item.subItems && (
+                  <FontAwesomeIcon
+                    icon={openMenu[item.name] ? faChevronDown : faChevronRight}
+                  />
+                )}
+              </>
             )}
           </div>
         )}
-        {item.subItems && openMenu[item.name] && (
+        {item.subItems && openMenu[item.name] && !isMinimized && (
           <div className="ml-4">{renderSidebarItems(item.subItems)}</div>
         )}
       </div>
@@ -184,33 +195,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col bg-offWhite">
       <div className="flex flex-1">
-        <aside className="w-60 bg-secondary text-textPrimary flex flex-col justify-between inset-y-0 pt-8">
+        <aside
+          className={`${
+            isMinimized ? "w-16" : "w-60"
+          } bg-secondary text-textPrimary flex flex-col justify-between inset-y-0 pt-8 transition-all duration-300 ease-in-out`}
+        >
+          <div className="flex justify-end px-4 mb-4">
+            <button
+              onClick={toggleSidebar}
+              className="text-textPrimary hover:text-accent"
+            >
+              <FontAwesomeIcon icon={isMinimized ? faBars : faChevronLeft} />
+            </button>
+          </div>
           <nav className="mt-4 px-2">{renderSidebarItems(sidebarItems)}</nav>
           <div className="mt-auto p-4 flex flex-col items-start">
-            <div className="px-6 py-4 w-full rounded-xl border-1 border-border bg-highlight">
-              <div className="flex items-center space-x-4">
-                <div>
-                  <div className="font-bold">{userInfo.name}</div>
-                  <div className="text-sm opacity-75">{userInfo.email}</div>
+            {!isMinimized && (
+              <div className="px-6 py-4 w-full rounded-xl border-1 border-border bg-highlight">
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <div className="font-bold">{userInfo.name}</div>
+                    <div className="text-sm opacity-75">{userInfo.email}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-
+            )}
             <hr className="w-full border-[1px] border-border mt-4" />
-
             <button
               onClick={() => router.push("/settings")}
               className="flex items-center space-x-2 px-4 py-3 w-full text-base font-semibold rounded-lg cursor-pointer hover:bg-accent hover:text-offWhite"
             >
               <FontAwesomeIcon icon={faCog} />
-              <span>Settings</span>
+              {!isMinimized && <span>Settings</span>}
             </button>
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 px-4 py-3 w-full text-base font-semibold rounded-lg cursor-pointer hover:bg-accent hover:text-offWhite"
             >
               <FontAwesomeIcon icon={faSignOutAlt} />
-              <span>Log out</span>
+              {!isMinimized && <span>Log out</span>}
             </button>
           </div>
         </aside>

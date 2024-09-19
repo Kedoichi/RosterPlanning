@@ -1,0 +1,46 @@
+.rbc-calendar {
+  background: #f8f6f1 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+.rbc-active {
+  background: #bcb78f !important;
+  box-shadow: none !important;
+  color: #494632 !important;
+}
+.rbc-btn-group > button:hover {
+  background: #e2e2ce;
+  color: #6b6645;
+}
+
+.rbc-toolbar-label {
+  letter-spacing: 2px;
+}
+.rbc-header {
+  text-align: center !important;
+  margin: auto !important;
+}
+.rbc-background-event {
+  background: red !important;
+}
+
+.rbc-event,
+.rbc-background-event {
+  padding: 0px;
+  margin: 0px;
+  border: none !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+.rbc-event-label {
+  display: none !important;
+}
+.rbc-current-time-indicator {
+  z-index: 1 !important;
+}
+
+.rbc-addons-dnd-resize-ns-icon {
+  padding: 3px 20px;
+  color: #6b6645;
+}
