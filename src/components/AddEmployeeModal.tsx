@@ -19,7 +19,7 @@ const AddEmployeeModal = ({
     phone: "",
     email: "",
     role: "staff",
-    stores: [],
+    stores: [] as string[],
   });
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -28,7 +28,14 @@ const AddEmployeeModal = ({
     setNewEmployee({ ...newEmployee, [name]: value });
   };
   const [stores, setStores] = useState<Store[]>([]);
-
+  const handleStoreChange = (storeId: string) => {
+    setNewEmployee((prev) => {
+      const updatedStores = prev.stores.includes(storeId)
+        ? prev.stores.filter((id) => id !== storeId)
+        : [...prev.stores, storeId];
+      return { ...prev, stores: updatedStores };
+    });
+  };
   useEffect(() => {
     const fetchStores = async () => {
       if (!businessId) return;
@@ -93,70 +100,77 @@ const AddEmployeeModal = ({
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  <div className="mt-3 text-center w-full sm:text-left">
+                    <h3 className="text-lg font-medium text-gray-900">
                       Add New Employee
                     </h3>
                     <div className="mt-2">
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-col items-center gap-2">
                         <input
                           type="text"
                           name="name"
                           value={newEmployee.name}
                           onChange={handleChange}
                           placeholder="Employee name"
-                          className="flex-1 px-2 py-1 border rounded"
+                          className="flex-1 px-2 py-1 border rounded w-full"
                         />
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={newEmployee.phone}
-                          onChange={handleChange}
-                          placeholder="Employee phone"
-                          className="flex-1 px-2 py-1 border rounded"
-                        />
-                        <input
-                          type="email"
-                          name="email"
-                          value={newEmployee.email}
-                          onChange={handleChange}
-                          placeholder="Employee email"
-                          className="flex-1 px-2 py-1 border rounded"
-                        />
-                        <select
-                          name="role"
-                          value={newEmployee.role}
-                          onChange={handleChange}
-                          className="flex-1 px-2 py-1 border rounded"
-                        >
-                          <option value="staff">Staff</option>
-                          <option value="manager">Manager</option>
-                        </select>
-                        <div className="flex-1">
+                        <div className="flex justify-evenly w-full">
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={newEmployee.phone}
+                            onChange={handleChange}
+                            placeholder="Employee phone"
+                            className="border rounded w-full px-2 py-1 "
+                          />
+                          <input
+                            type="email"
+                            name="email"
+                            value={newEmployee.email}
+                            onChange={handleChange}
+                            placeholder="Employee email"
+                            className="px-2 py-1 border rounded w-full "
+                          />
+                        </div>
+                        <div className="flex items-center gap-5">
+                          <h4 className="text-md font-medium text-gray-700">
+                            Role:
+                          </h4>
                           <select
-                            name="stores"
-                            multiple
-                            value={newEmployee.stores}
-                            onChange={(e) => {
-                              const storeIds = Array.from(
-                                e.target.selectedOptions,
-                                (option) => option.value
-                              );
-                              setNewEmployee({
-                                ...newEmployee,
-                                stores: storeIds,
-                              });
-                            }}
-                            className="w-full border border-gray-300 rounded-md shadow-sm p-2 h-[66px] overflow-auto"
+                            name="role"
+                            value={newEmployee.role}
+                            onChange={handleChange}
+                            className="flex-1 px-2 py-1 border rounded"
                           >
-                            {" "}
-                            {stores.map((store) => (
-                              <option key={store.id} value={store.id}>
-                                {" "}
-                                {store.name}{" "}
-                              </option>
-                            ))}{" "}
+                            <option value="staff">Staff</option>
+                            <option value="manager">Manager</option>
                           </select>
+                        </div>
+                        <div>
+                          <h4 className="text-md font-medium text-gray-700 mb-2 items-center text-center text-lg font-semibold">
+                            Select Stores
+                          </h4>
+                          <div className="space-y-2 max-h-40 overflow-y-auto flex items-center gap-14">
+                            {stores.map((store) => (
+                              <div key={store.id} className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  id={`store-${store.id}`}
+                                  checked={newEmployee.stores.includes(
+                                    store.id
+                                  )}
+                                  onChange={() => handleStoreChange(store.id)}
+                                  className="w-5 h-5 text-highlight bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-highlight focus:ring-offset-2 cursor-pointer"
+                                />
+                                <label
+                                  htmlFor={`store-${store.id}`}
+                                  className="ml-2 block text-lg font-semibold bg-highlight px-3 py-1 rounded-lg text-gray-800 cursor-pointer"
+                                >
+                                  {store.name}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>

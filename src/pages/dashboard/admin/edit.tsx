@@ -32,7 +32,6 @@ const EditEmployee = () => {
         const userDetails = JSON.parse(userDetailsStr);
         const businessId = userDetails.businessId;
 
-        // Fetch the employee data
         if (employeeId) {
           const empRef = doc(
             db,
@@ -47,12 +46,11 @@ const EditEmployee = () => {
           }
         }
 
-        // Fetch the stores
         const storesRef = collection(db, "businesses", businessId, "stores");
         const storesSnap = await getDocs(storesRef);
         const storesData = storesSnap.docs.map((doc) => ({
           id: doc.id,
-          name: doc.data().name, // assuming each store document has a 'name' field
+          name: doc.data().name,
         }));
         setStores(storesData);
       }
@@ -68,12 +66,14 @@ const EditEmployee = () => {
     setEmployee((prev) => (prev ? { ...prev, [name]: value } : null));
   };
 
-  const handleStoresChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const storeIds = Array.from(
-      e.target.selectedOptions,
-      (option) => option.value
-    );
-    setEmployee((prev) => (prev ? { ...prev, stores: storeIds } : null));
+  const handleStoreChange = (storeId: string) => {
+    setEmployee((prev) => {
+      if (!prev) return null;
+      const updatedStores = prev.stores.includes(storeId)
+        ? prev.stores.filter((id) => id !== storeId)
+        : [...prev.stores, storeId];
+      return { ...prev, stores: updatedStores };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -100,121 +100,122 @@ const EditEmployee = () => {
         stores: employee.stores,
       });
 
-      router.push("/dashboard/admin/staff-list"); // Redirect to the staff list page
+      router.push("/dashboard/admin/staff-list");
     }
   };
 
   if (!employee) return <p>Loading...</p>;
 
   return (
-    <DashboardLayout userType="manager">
-      <div className="container mx-auto px-4">
-        <h1 className="text-2xl font-semibold my-4">Edit Employee</h1>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                id="name"
-                value={employee.name}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              />
-            </div>
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-secondary w-fit rounded ">
+          <h1 className="text-3xl font-semibold mb-8 text-textPrimary px-4 py-2">
+            Edit Employee
+          </h1>
+        </div>
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+        >
+          <div className="mb-6">
+            <label
+              htmlFor="name"
+              className="block text-gray-700 text-sm font-bold mb-2"
+            >
+              Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              value={employee.name}
+              onChange={handleChange}
+              required
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+          </div>
 
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Phone
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                id="phone"
-                value={employee.phone}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              />
-            </div>
+          <div className="mb-6">
+            <label
+              htmlFor="phone"
+              className="block text-gray-700 text-sm font-bold mb-2"
+            >
+              Phone
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              id="phone"
+              value={employee.phone}
+              onChange={handleChange}
+              required
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+          </div>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                value={employee.email}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              />
-            </div>
+          <div className="mb-6">
+            <label
+              htmlFor="email"
+              className="block text-gray-700 text-sm font-bold mb-2"
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              value={employee.email}
+              onChange={handleChange}
+              required
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            />
+          </div>
 
-            <div>
-              <label
-                htmlFor="role"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Role
-              </label>
-              <select
-                name="role"
-                id="role"
-                value={employee.role}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              >
-                <option value="staff">Staff</option>
-                <option value="manager">Manager</option>
-                {/* Add more roles as necessary */}
-              </select>
-            </div>
+          <div className="mb-6">
+            <label
+              htmlFor="role"
+              className="block text-gray-700 text-sm font-bold mb-2"
+            >
+              Role
+            </label>
+            <select
+              name="role"
+              id="role"
+              value={employee.role}
+              onChange={handleChange}
+              required
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            >
+              <option value="staff">Staff</option>
+              <option value="manager">Manager</option>
+            </select>
+          </div>
 
-            {/* Stores selector */}
-            {/* Existing stores select code */}
-            <div>
-              <label
-                htmlFor="stores"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Stores
-              </label>
-              <select
-                name="stores"
-                id="stores"
-                multiple
-                value={employee.stores}
-                onChange={handleStoresChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                size={stores.length > 10 ? 10 : stores.length} // Adjust the size as necessary
-              >
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="mt-2 space-y-2 mb-5">
+            {stores.map((store) => (
+              <div key={store.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`store-${store.id}`}
+                  checked={employee.stores.includes(store.id)}
+                  onChange={() => handleStoreChange(store.id)}
+                  className="w-5 h-5 text-highlight bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-highlight focus:ring-offset-2 cursor-pointer"
+                />
+                <label
+                  htmlFor={`store-${store.id}`}
+                  className="ml-2 block text-lg font-semibold bg-highlight px-3 py-1 rounded-lg text-gray-800"
+                >
+                  {store.name}
+                </label>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between">
             <button
               type="submit"
-              className="mt-4 bg-blue-500 text-white rounded px-4 py-2"
+              className="bg-boldhighlight  hover:bg-accent hover:text-offWhite  text-textPrimary  font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             >
               Save Changes
             </button>

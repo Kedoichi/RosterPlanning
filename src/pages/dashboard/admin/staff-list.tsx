@@ -217,7 +217,8 @@ const StaffList = () => {
                       {employee.phone}
                     </td>
                     <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-textPrimary">
-                      {employee.role}
+                      {employee.role.charAt(0).toUpperCase() +
+                        employee.role.slice(1)}
                     </td>
                     <td className="px-10 py-2 whitespace-nowrap text-sm font-medium text-textPrimary">
                       {employee.stores

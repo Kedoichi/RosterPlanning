@@ -81,7 +81,6 @@ export const useAuth = () => {
     const { email, password, businessCode } = formData;
 
     try {
-      // Authenticate the user with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -89,7 +88,6 @@ export const useAuth = () => {
       );
       const user = userCredential.user;
 
-      // Find the business associated with the provided code
       const businessQuery = query(
         collection(db, "businesses"),
         where("Code", "==", businessCode)
@@ -103,7 +101,6 @@ export const useAuth = () => {
       const businessDoc = businessSnapshot.docs[0];
       const businessId = businessDoc.id;
 
-      // Fetch the user document within the nested 'employees' collection of the business
       const userDocRef = doc(
         db,
         "businesses",
@@ -118,17 +115,16 @@ export const useAuth = () => {
       }
 
       const userData = userDoc.data();
-      const userId = user.uid;
+      const userDetails = {
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        role: userData.role,
+        businessId: businessId,
+      };
 
-      // Store the necessary details including the business ID in local storage
-      localStorage.setItem(
-        "userDetails",
-        JSON.stringify({ ...userData, businessId, userId })
-      );
-
-      if (userData.role !== "manager" && userData.role !== "staff") {
-        throw new Error("User role is not recognized");
-      }
+      // Store user details in localStorage
+      localStorage.setItem("userDetails", JSON.stringify(userDetails));
 
       return { role: userData.role };
     } catch (error) {

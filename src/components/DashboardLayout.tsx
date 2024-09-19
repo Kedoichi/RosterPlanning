@@ -24,45 +24,50 @@ type UserDetails = {
   name: string;
   email: string;
   phone: string;
-  role: string;
+  role: "manager" | "staff";
   businessId: string;
 };
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
-  userType: "manager" | "staff";
 };
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({
-  children,
-  userType,
-}) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [userInfo, setUserInfo] = useState<UserDetails | null>(null);
   const [openMenu, setOpenMenu] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
   useEffect(() => {
-    if (!userInfo) {
+    const fetchUserData = async () => {
       const savedUserDetails = localStorage.getItem("userDetails");
       if (savedUserDetails) {
-        setUserInfo(JSON.parse(savedUserDetails));
+        try {
+          const parsedUserDetails = JSON.parse(savedUserDetails) as UserDetails;
+          setUserInfo(parsedUserDetails);
+        } catch (error) {
+          console.error("Error parsing user details from localStorage:", error);
+          localStorage.removeItem("userDetails");
+        }
       } else if (auth.currentUser) {
         const uid = auth.currentUser.uid;
         const userDocRef = doc(db, "employees", uid);
-        getDoc(userDocRef)
-          .then((docSnap) => {
-            if (docSnap.exists()) {
-              const userDetails = docSnap.data() as UserDetails;
-              setUserInfo(userDetails);
-              localStorage.setItem("userDetails", JSON.stringify(userDetails));
-            }
-          })
-          .catch((error) =>
-            console.error("Error fetching user details:", error)
-          );
+        try {
+          const docSnap = await getDoc(userDocRef);
+          if (docSnap.exists()) {
+            const userDetails = docSnap.data() as UserDetails;
+            setUserInfo(userDetails);
+            localStorage.setItem("userDetails", JSON.stringify(userDetails));
+          } else {
+            console.error("User document does not exist");
+          }
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+        }
       }
-    }
-  }, [userInfo]);
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -152,7 +157,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       icon: faCalendarAlt,
     },
     { name: "Time Clock", href: "/dashboard/admin/time-clock", icon: faClock },
-    { name: "Setting", href: "/dashboard/admin/setting", icon: faCog },
+    { name: "Store Setting", href: "/dashboard/admin/setting", icon: faCog },
   ];
 
   const staffSidebarItems: SidebarItem[] = [
@@ -170,7 +175,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   ];
 
   const sidebarItems =
-    userType === "manager" ? managerSidebarItems : staffSidebarItems;
+    userInfo?.role === "manager" ? managerSidebarItems : staffSidebarItems;
+
+  if (!userInfo) {
+    return <div>Loading...</div>; // Or a more sophisticated loading component
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-offWhite">
@@ -181,13 +190,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className="px-6 py-4 w-full rounded-xl border-1 border-border bg-highlight">
               <div className="flex items-center space-x-4">
                 <div>
-                  <div className="font-bold">{userInfo?.name}</div>
-                  <div className="text-sm opacity-75">{userInfo?.email}</div>
+                  <div className="font-bold">{userInfo.name}</div>
+                  <div className="text-sm opacity-75">{userInfo.email}</div>
                 </div>
               </div>
             </div>
 
-            <hr className="w-full border-[1px] border-border mt-4"></hr>
+            <hr className="w-full border-[1px] border-border mt-4" />
 
             <button
               onClick={() => router.push("/settings")}
