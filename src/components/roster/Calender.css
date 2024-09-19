@@ -9,11 +9,10 @@
   box-shadow: none !important;
   color: #494632 !important;
 }
-.rbc-btn-group > button:hover {
+.rbc-btn-group button:hover {
   background: #e2e2ce;
   color: #6b6645;
 }
-
 .rbc-toolbar-label {
   letter-spacing: 2px;
 }

@@ -122,10 +122,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             }`}
             onClick={() => item.subItems && toggleMenuItem(item.name)}
           >
-            <FontAwesomeIcon icon={item.icon} />
+            <div className="space-x-2 ">
+              <FontAwesomeIcon icon={item.icon} />
+
+              {!isMinimized && <span>{item.name}</span>}
+            </div>
             {!isMinimized && (
               <>
-                <span>{item.name}</span>
                 {item.subItems && (
                   <FontAwesomeIcon
                     icon={openMenu[item.name] ? faChevronDown : faChevronRight}
@@ -147,26 +150,27 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     { name: "Messages", href: "/dashboard/admin/messages", icon: faEnvelope },
     {
       name: "Staff",
+      href: "/dashboard/admin/staff-list",
+      icon: faList,
+    },
+    {
+      name: "Roster",
       href: "#",
-      icon: faUsers,
+      icon: faCalendarAlt,
       subItems: [
         {
-          name: "Staff List",
-          href: "/dashboard/admin/staff-list",
-          icon: faList,
+          name: "View Roster",
+          href: "/dashboard/admin/rosterView",
+          icon: null,
         },
         {
-          name: "Add Staff",
-          href: "/dashboard/admin/staff-list",
-          icon: faUserPlus,
+          name: "Roster Planner",
+          href: "/dashboard/admin/rosterPlanner",
+          icon: null,
         },
       ],
     },
-    {
-      name: "Roster Planning",
-      href: "/dashboard/admin/roster",
-      icon: faCalendarAlt,
-    },
+
     { name: "Time Clock", href: "/dashboard/admin/time-clock", icon: faClock },
     { name: "Store Setting", href: "/dashboard/admin/setting", icon: faCog },
   ];
@@ -200,10 +204,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             isMinimized ? "w-16" : "w-60"
           } bg-secondary text-textPrimary flex flex-col justify-between inset-y-0 pt-8 transition-all duration-300 ease-in-out`}
         >
-          <div className="flex justify-end px-4 mb-4">
+          <div className="flex justify-end mb-4">
             <button
               onClick={toggleSidebar}
-              className="text-textPrimary hover:text-accent"
+              className="text-textPrimary hover:text-accent  bg-highlight pr-5 pl-3 py-2 rounded-l-md"
             >
               <FontAwesomeIcon icon={isMinimized ? faBars : faChevronLeft} />
             </button>
@@ -237,7 +241,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </button>
           </div>
         </aside>
-        <main className="flex-1 p-4 bg-survey overflow-y-auto">{children}</main>
+        <main className="flex-1 p-4 bg-highlight overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );

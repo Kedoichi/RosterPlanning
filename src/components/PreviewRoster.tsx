@@ -22,6 +22,11 @@ const PreviewRoster = ({
   employees,
   currentViewStart,
   currentViewEnd,
+}: {
+  events: Event[];
+  employees: Employee[];
+  currentViewStart: Date;
+  currentViewEnd: Date;
 }) => {
   // Generate array of dates for the current view range
   const dates = [];
@@ -47,11 +52,25 @@ const PreviewRoster = ({
     return acc;
   }, {});
 
-  // Calculate total shifts correctly by counting only events within the date range per employee
-  const getTotalShifts = (employeeName) => {
-    return filteredEvents.reduce((acc, event) => {
-      return event.title === employeeName ? acc + 1 : acc;
-    }, 0);
+  // Calculate total shifts and hours for each employee
+  const getTotalShiftsAndHours = (employeeName: string) => {
+    return filteredEvents.reduce(
+      (acc, event) => {
+        if (event.title === employeeName) {
+          const duration = moment(event.end).diff(
+            moment(event.start),
+            "hours",
+            true
+          );
+          return {
+            shifts: acc.shifts + 1,
+            hours: acc.hours + duration,
+          };
+        }
+        return acc;
+      },
+      { shifts: 0, hours: 0 }
+    );
   };
 
   return (
@@ -71,7 +90,7 @@ const PreviewRoster = ({
               </th>
             ))}
             <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Total Shifts
+              Total
             </th>
           </tr>
         </thead>
@@ -83,18 +102,32 @@ const PreviewRoster = ({
               </td>
               {dates.map((date) => {
                 const formattedDate = moment(date).format("YYYY-MM-DD");
-                const shifts = eventsByDate[formattedDate]
-                  ?.filter((e) => e.title === employee.name)
-                  .map((e) => `${moment(e.start).format("HH:mm")} - ${moment(e.end).format("HH:mm")}`)
-                  .join(", ") || "";
+                const shifts =
+                  eventsByDate[formattedDate]
+                    ?.filter((e) => e.title === employee.name)
+                    .map(
+                      (e) =>
+                        `${moment(e.start).format("HH:mm")} - ${moment(
+                          e.end
+                        ).format("HH:mm")}`
+                    )
+                    .join(", ") || "";
                 return (
-                  <td key={date.toString()} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td
+                    key={date.toString()}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                  >
                     {shifts}
                   </td>
                 );
               })}
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {getTotalShifts(employee.name)}
+                {(() => {
+                  const { shifts, hours } = getTotalShiftsAndHours(
+                    employee.name
+                  );
+                  return `${shifts} shifts (${hours.toFixed(2)} hours)`;
+                })()}
               </td>
             </tr>
           ))}

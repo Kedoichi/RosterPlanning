@@ -234,20 +234,20 @@ const StaffList = () => {
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-textPrimary">
                       <button
-                        className="px-4 py-2 text-md font-semibold tracking-wider bg-highlight text-textPrimary rounded-md hover:bg-boldhighlight rounded-md mr-2"
+                        className="px-4 py-2 text-md font-semibold tracking-wider bg-highlight text-textPrimary rounded-md hover:bg-boldhighlight mr-2"
                         onClick={() => toggleViewModal(employee)}
                       >
                         View
                       </button>
                       <Link href={`edit?employeeId=${employee.id}`}>
-                        <button className="px-4 py-2 text-md font-semibold tracking-wider bg-highlight text-textPrimary rounded-md hover:bg-boldhighlight rounded-md  mr-2">
+                        <button className="px-4 py-2 text-md font-semibold tracking-wider bg-highlight text-textPrimary hover:bg-boldhighlight rounded-md  mr-2">
                           Edit
                         </button>
                       </Link>
                       {employee.role !== "manager" && (
                         <button
                           onClick={() => handleDeleteEmployee(employee.id)}
-                          className="px-4 py-2 text-md font-semibold tracking-wider bg-boldhighlight text-textPrimary rounded-md  hover:bg-accent hover:text-offWhite rounded-md"
+                          className="px-4 py-2 text-md font-semibold tracking-wider bg-boldhighlight text-textPrimary  hover:bg-accent hover:text-offWhite rounded-md"
                         >
                           Delete
                         </button>
