@@ -4,9 +4,10 @@ import moment from "moment";
 
 interface CustomEventProps {
   event: Event;
+  view: string;
 }
 
-const CustomEvent: React.FC<CustomEventProps> = ({ event }) => {
+const CustomEvent: React.FC<CustomEventProps> = ({ event, view }) => {
   const start = moment(event.start);
   const end = moment(event.end);
   const durationMs = end.diff(start);
@@ -14,6 +15,7 @@ const CustomEvent: React.FC<CustomEventProps> = ({ event }) => {
   const hours = Math.floor(duration.asHours());
   const minutes = duration.minutes();
 
+  // Conditional background color
   const bgColorClass =
     event.bgColor === "#FF8F8F"
       ? "bg-red-200"
@@ -27,15 +29,24 @@ const CustomEvent: React.FC<CustomEventProps> = ({ event }) => {
     <div
       className={`flex flex-col justify-between h-full w-full py-2 px-3 rounded-lg shadow ${bgColorClass} text-gray-800 overflow-hidden`}
     >
-      <div className="flex justify-between items-start">
-        <strong className="font-bold text-md truncate">{event.title}</strong>
-        <span className="text-base font-semibold">{start.format("HH:mm")}</span>
-      </div>
-      <div className="text-base">
-        {hours}h {minutes}m
-      </div>
-      <div className="flex justify-end items-end text-base">
-        <span>{end.format("HH:mm")}</span>
+      <div className="flex h-full gap-2 justify-evenly">
+        {/* Event title and duration */}
+        <div className="flex flex-col items-center">
+          <strong className="font-bold text-md truncate pb-3">
+            {event.title}
+          </strong>
+          <div className="text-sm">
+            {hours}h {minutes}m
+          </div>
+        </div>
+
+        {/* Show times in 'day' view */}
+        {view === "day" && (
+          <div className="flex flex-col justify-between h-full items-end">
+            <span>{start.format("HH:mm")}</span>
+            <span>{end.format("HH:mm")}</span>
+          </div>
+        )}
       </div>
     </div>
   );
