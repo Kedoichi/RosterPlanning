@@ -89,7 +89,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   type SidebarItem = {
     name: string;
     href: string;
-    icon: any;
+    icon?: any;
     subItems?: SidebarItem[];
   };
 
@@ -109,7 +109,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   : "hover:bg-accent hover:text-offWhite"
               }`}
             >
-              <FontAwesomeIcon icon={item.icon} />
+              {item.icon && <FontAwesomeIcon icon={item.icon} />}
               {!isMinimized && <span>{item.name}</span>}
             </span>
           </Link>
@@ -123,8 +123,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             onClick={() => item.subItems && toggleMenuItem(item.name)}
           >
             <div className="space-x-2 ">
-              <FontAwesomeIcon icon={item.icon} />
-
+              {item.icon && <FontAwesomeIcon icon={item.icon} />}
               {!isMinimized && <span>{item.name}</span>}
             </div>
             {!isMinimized && (
@@ -161,12 +160,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {
           name: "View Roster",
           href: "/dashboard/admin/rosterView",
-          icon: null,
         },
         {
           name: "Roster Planner",
           href: "/dashboard/admin/rosterPlanner",
-          icon: null,
         },
       ],
     },

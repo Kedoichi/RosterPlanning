@@ -1,23 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import moment from "moment";
-import { v4 as uuidv4 } from "uuid";
-import {
-  collection,
-  query,
-  getDocs,
-  where,
-  setDoc,
-  doc,
-} from "firebase/firestore";
+import { collection, query, getDocs, where } from "firebase/firestore";
 import { db } from "../../../firebaseConfig";
 import DashboardLayout from "../../../components/DashboardLayout";
 import PreviewRoster from "@/components/PreviewRoster";
 import CustomEvent from "@/components/roster/CustomEvent";
-import EventModal from "@/components/roster/EventModal";
 import { Employee, Event, Store } from "@/components/roster/types";
 
 moment.locale("en", { week: { dow: 1 } });
@@ -27,10 +18,11 @@ const DnDCalendar = withDragAndDrop(Calendar);
 const Roster: React.FC = () => {
   const [events, setEvents] = useState<{ [key: string]: Event }>({});
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [staffStore, setStaffStore] = useState<Store | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [currentView, setCurrentView] = useState("week");
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [currentViewStart, setCurrentViewStart] = useState<Date>(
     moment().startOf("week").toDate()
   );
@@ -39,7 +31,20 @@ const Roster: React.FC = () => {
   );
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [view, setView] = useState<"week" | "day">("week");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
+  const displayedEmployees = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return employees.slice(startIndex, endIndex);
+  }, [currentPage, employees]);
+
+  const totalPages = Math.ceil(employees.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
   useEffect(() => {
     const userDetails = JSON.parse(localStorage.getItem("userDetails") || "{}");
     setBusinessId(userDetails.businessId);
@@ -58,10 +63,10 @@ const Roster: React.FC = () => {
     }
   }, [selectedStore, businessId]);
 
-  const getTotalHours = (employeeName: string): number => {
+  const getTotalHours = (employeeId: string): number => {
     const employeeEvents = Object.values(events).filter(
       (event) =>
-        event.title === employeeName &&
+        event.employeeId === employeeId &&
         new Date(event.start) >= currentViewStart &&
         new Date(event.end) <= currentViewEnd
     );
@@ -118,7 +123,6 @@ const Roster: React.FC = () => {
       )
     );
   };
-
   const handleRangeChange = (range: Date[] | { start: Date; end: Date }) => {
     if (Array.isArray(range)) {
       setCurrentViewStart(range[0]);
@@ -128,8 +132,37 @@ const Roster: React.FC = () => {
       setCurrentViewEnd(range.end);
     }
   };
-  const handleViewChange = (newView: "week" | "day") => {
-    setView(newView);
+  const handleViewChange = (view: string) => {
+    setCurrentView(view);
+  };
+
+  const handleNavigate = (newDate: Date) => {
+    setCurrentDate(newDate);
+    setCurrentViewStart(
+      moment(newDate)
+        .startOf(currentView as moment.unitOfTime.StartOf)
+        .toDate()
+    );
+    setCurrentViewEnd(
+      moment(newDate)
+        .endOf(currentView as moment.unitOfTime.StartOf)
+        .toDate()
+    );
+  };
+
+  const toggleView = () => {
+    setShowPreview((prevShowPreview) => !prevShowPreview);
+    // When toggling, update the current view range based on the last currentDate and view
+    setCurrentViewStart(
+      moment(currentDate)
+        .startOf(currentView as moment.unitOfTime.StartOf)
+        .toDate()
+    );
+    setCurrentViewEnd(
+      moment(currentDate)
+        .endOf(currentView as moment.unitOfTime.StartOf)
+        .toDate()
+    );
   };
   return (
     <DashboardLayout userType="manager">
@@ -163,9 +196,9 @@ const Roster: React.FC = () => {
           <div className="space-x-4">
             <button
               onClick={() => setShowPreview(!showPreview)}
-              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md bg-boldhighlight text-select  hover:bg-accent hover:text-offWhite "
             >
-              {showPreview ? "Show Calendar View" : "Show Preview View"}
+              {showPreview ? "Show Calendar View" : "Show Table View"}
             </button>
           </div>
         </div>
@@ -185,9 +218,12 @@ const Roster: React.FC = () => {
                 events={Object.values(events)}
                 resizable
                 onRangeChange={handleRangeChange}
-                defaultView="week"
-                views={["week", "day"]}
+                defaultView={currentView}
+                view={currentView}
                 onView={handleViewChange}
+                date={currentDate}
+                onNavigate={handleNavigate}
+                views={["week", "day"]}
                 step={30}
                 selectable
                 min={new Date(0, 0, 0, 6, 0, 0)}
@@ -219,23 +255,7 @@ const Roster: React.FC = () => {
               <h3 className="text-lg font-semibold mb-2  bg-offWhite rounded-md px-4 py-2 text-center">
                 Employees & Hours
               </h3>
-              <select
-                id="staffStoreSelector"
-                value={staffStore?.id || ""}
-                onChange={(e) => {
-                  const store =
-                    stores.find((s) => s.id === e.target.value) || null;
-                  setStaffStore(store);
-                }}
-                className="mb-4 w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              >
-                <option value="">All Stores</option>
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
+
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-textPrimary bg-offWhite rounded-md">
                   <thead>
@@ -249,14 +269,12 @@ const Roster: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-textPrimary">
-                    {employees.map((employee) => {
-                      const totalHours = getTotalHours(employee.name).toFixed(
-                        2
-                      );
-                      return (
+                    {displayedEmployees.map((employee) => {
+                      const totalHours = getTotalHours(employee.id).toFixed(2);
+                      return parseFloat(totalHours) > 0 ? (
                         <tr key={employee.id}>
                           <td className="px-3 py-2 whitespace-nowrap">
-                            <span className="inline-block px-4 py-2  bg-boldhighlight text-select w-full rounded-md  transition-colors duration-200 tracking-wider font-semibold">
+                            <span className="inline-block px-4 py-2 bg-boldhighlight text-select w-full rounded-md transition-colors duration-200 tracking-wider font-semibold">
                               {employee.name}
                             </span>
                           </td>
@@ -264,7 +282,7 @@ const Roster: React.FC = () => {
                             {totalHours} h
                           </td>
                         </tr>
-                      );
+                      ) : null;
                     })}
                   </tbody>
                 </table>
